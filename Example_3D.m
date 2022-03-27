@@ -18,7 +18,7 @@ D = D/sum(D);
 %for plotting:
 edge_alpha = 0.2;
 %make network:
-[A V empirical_deree_distribution EdgeLength_list Unmathched_edges spacing box_scale x C] = Geograph( N, D, density, dim, spacing_factor, expected_bond_length, var_bond_length, std_cutoff, PointProcess,Boundaries);
+[A V empirical_deree_distribution EdgeLength_list Unmathched_edges spacing box_scale x C] = GeometricGraph( N, D, density, dim, spacing_factor, expected_bond_length, var_bond_length, std_cutoff, PointProcess,Boundaries);
 
 %rescale parameters for output:
 x = x * box_scale;
