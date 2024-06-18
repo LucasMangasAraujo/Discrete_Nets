@@ -231,24 +231,24 @@ This generates two text files `test.txt` and `test_Log.txt` in the newly created
 ### Input file
 The input file `inputs.txt` contains the information for the simulation, and it is structured as follows:
 ```text
-  $Dimension
-  3
-  $Geometry
-  ../Network generation/Networks/test_Log.txt
-  $As-generated chain density
-  0.001
-  $Spring: 1-Gaussian, 2-Langevin, 3-XLangevin, 4-FracLangevin
-  2
-  $Spring parameters
-  1 100
-  $Loading: 1-Uniaxial, 2-Biaxial, 3-Shear
-  1
-  $Final stretch and number of increments
-  10 20
-  $Results folder
-  Results/
-  $Should configurations be stored[y/n]
-  y
+    $Dimension
+    3
+    $Geometry
+    ../Network generation/Networks/test.txt
+    $As-generated chain density
+    0.001
+    $Spring: 1-Gaussian, 2-Langevin, 3-XLangevin, 4-FracLangevin
+    2
+    $Spring parameters
+    1 100
+    $Loading: 1-Uniaxial, 2-Biaxial, 3-Shear
+    1
+    $Final stretch and number of increments
+    10 30
+    $Results folder
+    Results/
+    $Should configurations be stored[y/n]
+    y
 ```
 
 ### Launching the simulation
