@@ -13,11 +13,11 @@ clc; close all; clear all
 %% User inputs
 % -------------------------------------------------------------------------
 % Set the network parameters
-dim = 2; % Dimension in space
-n = 5e3; % Expected number of chains in the netwoek
-expected_bond_length = 20; % Average end-to-end distance with units
+dim = 3; % Dimension in space
+n = 10e3; % Expected number of chains in the netwoek
+expected_bond_length = 13; % Average end-to-end distance with units
 var_bond_length = 5; % Variance end-to-end distance with units
-nu = 5e-3; % Crosslink density
+nu = 1e-3; % Crosslink density
 compensation_factor = 1.35; % Relaxation compensation factor
 file_name = "test.txt"; % text file containing the network topology
 folder_name = "Networks/"; % Path of  the folder containing the text files
