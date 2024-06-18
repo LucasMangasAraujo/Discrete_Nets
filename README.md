@@ -1,4 +1,4 @@
-# Disctrete_Nets
+# Discrete_Nets
 
 ## Table of contents
 - [Description](#Description)
