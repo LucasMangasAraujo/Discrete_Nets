@@ -1,7 +1,7 @@
 $Dimension
 3
 $Geometry
-Networks/test_Log.txt
+../Network generation/Networks/test.txt
 $As-generated chain density
 0.001
 $Spring: 1-Gaussian, 2-Langevin, 3-XLangevin, 4-FracLangevin
@@ -16,4 +16,3 @@ $Results folder
 Results/
 $Should configurations be stored[y/n]
 y
-
