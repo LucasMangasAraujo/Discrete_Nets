@@ -177,7 +177,7 @@ Gaussian chains are modelled through the `harmonic` bond type in LAMMPS. The fre
 ```math
   w = \kappa(r - r_0)^2,
 ```
-where $\kappa$ and $r_0$ respectively represent the bond stiffness and the rest length. For Gaussian chains, $\kappa = \frac{3kT}{Nb^2}$, and $r_0 = 0$, with $kT$ denoting the temperature in energy units, and $N$ and $b$ respectively representing the number of Kuhn segments and Kuhn length.
+where $\kappa$ and $r_0$ respectively represent the bond stiffness and the rest length. For Gaussian chains, $\kappa = \frac{3kT}{2Nb^2}$, and $r_0 = 0$, with $kT$ denoting the temperature in energy units, and $N$ and $b$ respectively representing the number of Kuhn segments and Kuhn length.
 
 ### Freely-jointed chain
 The Freely-jointed chain (FJC) behaviour is the simplest model to account for the finite extensibility of polymer chains. The free energy $2$ as a function of the separation $r$ of the chain ends is given by: 
