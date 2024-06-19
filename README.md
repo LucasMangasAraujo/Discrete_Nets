@@ -161,7 +161,7 @@ After this step, a library `liblammps.a` and LAMMPS executable `lmp` inside the 
 
 
 #### Inclusion of bond (chain) behaviours
-Chain behaviours in LAMMPS are implemented as bond behaviours, defining interactions between two atoms. To add new chain behaviours, users must include C++ subroutines in the src/MOLECULE/ folder, providing both a header (`.h`) and a source file (`.cpp`). LAMMPS offers various predefined bond behaviours that can be utilized as references when implementing specific chain behaviours. After adding a new bond behaviour, it is necessary to recompile LAMMPS. This can be done by navigating to the `build` folder and running the following commands:
+Chain behaviours in LAMMPS are implemented as bond behaviours, defining interactions between two atoms. To add new chain behaviours, users must include C++ subroutines in the `src/MOLECULE/` folder, providing both a header (`.h`) and a source file (`.cpp`). LAMMPS offers various predefined bond behaviours that can be utilized as references when implementing specific chain behaviours. After adding a new bond behaviour, it is necessary to recompile LAMMPS. This can be done by navigating to the `build` folder and running the following commands:
 
 ```bash
   make -j N
@@ -250,6 +250,8 @@ The input file `inputs.txt` contains the information for the simulation, and it 
     $Should configurations be stored[y/n]
     y
 ```
+
+**Remark: Chain parameters are always passed with units. However, as a preprocessing step, the code normalises parameters with dimensions, since LAMMPS works with dimensionless quantities.**
 
 ### Launching the simulation
 Open the terminal and run the following command:
