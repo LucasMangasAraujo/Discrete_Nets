@@ -180,7 +180,7 @@ Gaussian chains are modelled through the `harmonic` bond type in LAMMPS. The fre
 where $\kappa$ and $r_0$ respectively represent the bond stiffness and the rest length. For Gaussian chains, $\kappa = \frac{3kT}{2Nb^2}$, and $r_0 = 0$, with $kT$ denoting the temperature in energy units, and $N$ and $b$ respectively representing the number of Kuhn segments and Kuhn length.
 
 ### Freely-jointed chain
-The Freely-jointed chain (FJC) behaviour is the simplest model to account for the finite extensibility of polymer chains. The free energy $2$ as a function of the separation $r$ of the chain ends is given by: 
+The Freely-jointed chain (FJC) behaviour is the simplest model to account for the finite extensibility of polymer chains. The free energy $w$ as a function of the separation $r$ of the chain ends is given by: 
 ```math
       w  = N kT\left[ \frac{r \beta}{N b} + \log \left(\frac{\beta}{\sinh \beta}\right)\right] \quad \textnormal{with} \quad \beta = \mathcal L^{-1}\left(\frac{r}{Nb} \right),
 ```
@@ -262,7 +262,7 @@ If permission errors arise, run the following instead:
 ```bash
   sudo python3 run.py
 ```
-Once completed, `run.py` will have generated a folder named `Results` containing the text file `data_uniaxial.txt`. This file contains the stress and stretch of the simulation. In this example, the code will also have created the `Current_geometries` containing the current configuration of the network at each stretch increment. 
+Once completed, `run.py` will have generated a folder named `Results` containing the text file `data_uniaxial.txt`. This file contains the stress and stretch of the simulation. In this example, the code will also have created the `Current_geometries` folder containing the current configuration of the network at each stretch increment. 
 
 ### Visualising the results
 In your preferred Python editor, run `plotCurves.py`. A plot similar to the following one will show up:
