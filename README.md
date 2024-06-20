@@ -93,7 +93,7 @@ In brief, LAMMPS (Large-scale Atomic/Molecular Massively Parallel Simulator) is 
 
 
 ### Windows users
-LAMMPS was primarily developed to be run on Unix-based machines. While recent versions of LAMMPS can run on Windows machines, the following installation and compilation steps are only applicable. Therefore, Windows users are advised to use Windows Subsystem for Linux (WSL), which allows users to run Linux without a separate virtual machine or dual booting. For instructions on setting up Linux on Windows, refer to this [link](https://docs.lammps.org/Howto_wsl.html) in the LAMMPS documentation.
+LAMMPS was primarily developed to be run on Unix-based machines. While recent versions of LAMMPS can run on Windows machines, the following installation and compilation steps only apply to Unix machines. Therefore, Windows users are advised to use Windows Subsystem for Linux (WSL), which allows users to run Linux without a separate virtual machine or dual booting. For instructions on setting up Linux on Windows, refer to this [link](https://docs.lammps.org/Howto_wsl.html) in the LAMMPS documentation.
 
 ### Compiling LAMMPS 
 Using LAMMPS within this project requires compiling it from the source with specific packages that are not included in basic installations. Follow these steps to install and compile LAMMPS for running DN simulations correctly:
