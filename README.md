@@ -264,6 +264,18 @@ If permission errors arise, run the following instead:
 ```
 Once completed, `run.py` will have generated a folder named `Results` containing the text file `data_uniaxial.txt`. This file contains the stress and stretch of the simulation. In this example, the code will also have created the `Current_geometries` folder containing the current configuration of the network at each stretch increment. 
 
+**Troubleshooting: In some machines, the following message may appear:  `sh: 1: /root/.local/bin/lmp: not found`. If that is the case, in the `runinc.py` function in  `run.py`, replace**
+
+```python
+  os.system('~/.local/bin/lmp -in main.in > log')
+```
+**by**
+
+```python
+  os.system('~/lammps/lammps/build/lmp -in main.in > log')
+```
+**and then run the code again using `python3 run.py`.**
+
 ### Visualising the results
 In your preferred Python editor, run `plotCurves.py`. A plot similar to the following one will show up:
 
