@@ -42,13 +42,14 @@ The primary features include:
 ## Citing 
 Please cite the following works if this project was useful for your work:
 ```
-@article{MangasAraujo2024DN,
-    Title = {Micromechanical modelling of rubbery networks: the role of chain pre-stretch},
-    Author = {Mangas Araujo, Lucas, Kryven, Ivan, and Brassart, Laurence},
-    Journal = {International Journal of Non-Linear Mechanics},
-    Volume = {},
-    Pages = {},
-    Year = {2024}}
+@article{araujo2024micromechanical,
+  title={Micromechanical modelling of rubbery networks: The role of chain pre-stretch},
+  author={Araujo, Lucas Mangas and Kryven, Ivan and Brassart, Laurence},
+  journal={International Journal of Non-Linear Mechanics},
+  pages={104834},
+  year={2024},
+  publisher={Elsevier}
+}
 ```
 
 ```
