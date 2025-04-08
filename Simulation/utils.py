@@ -38,8 +38,6 @@ def writeMain(simfile,posfile,Boundary,dim,model):
     elif model == '3':
         bond_style = 'Xlangevin'
         
-    elif model == '4':
-        bond_style = 'Fraclangevin'
         
     else:
         print('unknown bond type: %s' %model)
@@ -143,8 +141,7 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
     model : string indicating the type of bond behaviour.
             model = '1': Gaussian
             model = '2': FJC
-            model = '3': Breakable extensible FJC
-            model = '4': Breakable FJC
+            model = '3': Extensible FJC
     params: list containing chain parameters other than 
             the chain length.
             
@@ -195,7 +192,7 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
                     kappa = (3./2.) * (1 / ( N * pow(bKuhn, 2) )); ## Bond stiffness in the Gaussian regime
                     f.write('%d %g %g\n'%(idx, kappa, 0.)); ## zero rest length
                     
-                elif model == '2' or model == '4': ## FJC or breakable FJC
+                elif model == '2': ## FJC with Non-Gaussian statistics
                     f.write('%d %g %g\n' %(idx, bKuhn, N));
                 
                 elif model == '3': ## Extensible FJC
@@ -210,7 +207,7 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
                 kappa = (3./2.) * (1 / ( N * pow(bKuhn, 2) )); ## Bond stiffness in the Gaussian regime
                 f.write('1 %g %g\n'%(kappa, 0.)); ## zero rest length
                 
-            elif model == '2' or model == '4': ## FJC or breakable FJC
+            elif model == '2': ## Kuhn length and Kuhn segments 
                 f.write('1 %g %g\n' %(bKuhn, N));
             
             elif model == '3': ## Extensible FJC
@@ -504,8 +501,7 @@ def printChainPar(model, chain_params, polydispersity_flag):
     model : string indicating the type of bond behaviour.
             model = '1': Gaussian
             model = '2': FJC
-            model = '3': Breakable extensible FJC
-            model = '4': Breakable FJC
+            model = '3': Extensible FJC
     chain_params: tuple with the chain parameters
     polydispersity_flag: boolean that is true if the DN
                         is polydisperse.
@@ -530,7 +526,7 @@ def printChainPar(model, chain_params, polydispersity_flag):
             print('b = %g' %chain_params[0])
             
     elif model == '3': 
-        print('spring type: Breakable extensible FJC');
+        print('spring type: Extensible FJC');
         if not polydispersity_flag:
             print('b = %g, N = %g, Eb = %g, critical_eng = %g' %chain_params)
         else:
@@ -538,14 +534,6 @@ def printChainPar(model, chain_params, polydispersity_flag):
             print('polydispersed DN')
             print('b = %g, Eb = %g, critical_eng = %g' %tmp);
             
-    elif model == '4': 
-        print('spring type: Breakable FJC');
-        if not polydispersity_flag:
-            print('b = %g, N = %g, critical_stretch = %g' %chain_params)
-            
-        else:
-            tmp = chain_params[0], chain_params[2];
-            print('b = %g, critical_stretch = %g' %tmp)
     
     return
 
