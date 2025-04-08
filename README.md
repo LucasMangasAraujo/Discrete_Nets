@@ -188,15 +188,12 @@ The Freely-jointed chain (FJC) behaviour is the simplest model to account for th
 
 where $\mathcal{L}(x)=\coth{x}-1/x$ is the Langevin function.
 
-## Breakable extensible FJC
+##  Extensible FJC
 The extensible freely-jointed chain behaviour ([Mao et al.](https://www.sciencedirect.com/science/article/pii/S2352431616302681)) allows the stretching of the Kuhn lengths $b$, regularising the free energy of the FJC for large chain elongations. Let $\lambda_b$ define the segment stretch, the free energy is given by:
 ```math
 w  = \varepsilon(\lambda_b) + N kT\left[ \frac{r \beta}{\lambda_bNb_0} + \log \left(\frac{\beta}{\sinh \beta}\right)\right] \quad \textnormal{with} \quad \beta = \mathcal L^{-1}\left(\frac{r}{\lambda_b Nb_0} \right),
 ```
-where $b_0$ is the initial Kuhn length. $\varepsilon(\lambda_b) = \frac{1}{2}E_b(\lambda_b - 1)^2$  represents the enthalpic part of $w$, with $E_b$ characterizing the segments stiffness. $\lambda_b$ is such that it minimises $w$ under a fixed $r$. The semi-analytical solution for $\lambda_b$ proposed by [Li and Bouklas](https://www.sciencedirect.com/science/article/pii/S0020768319303804) is used for efficiency. The bond is broken whenever $\varepsilon$ reaches a critical value $\varepsilon_c$.
-
-### Breakable FJC
-The breakable FJC has the same energy form as a regular FJC, but the bond breaks when the chain reaches a critical stretch $\lambda_{cr}$.
+where $b_0$ is the initial Kuhn length. $\varepsilon(\lambda_b) = \frac{1}{2}E_b(\lambda_b - 1)^2$  represents the enthalpic part of $w$, with $E_b$ characterizing the segments stiffness. $\lambda_b$ is such that it minimises $w$ under a fixed $r$. The semi-analytical solution for $\lambda_b$ proposed by [Li and Bouklas](https://www.sciencedirect.com/science/article/pii/S0020768319303804) is used for efficiency.
 
 
 ## DN visualisation
