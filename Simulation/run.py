@@ -198,9 +198,9 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     
     
     if polydispersity_flag:
-        path_to_file = results_folder + 'data' + tmp;
-    else:
         path_to_file = results_folder + 'dataPoly' + tmp;
+    else:
+        path_to_file = results_folder + 'data' + tmp;
         
     
     print('stress and stretch data will be written to %s' %path_to_file.split('/')[-1]);
