@@ -79,7 +79,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     
     # Normalise the Kuhn length by the RVE's length
     nub3 = chain_density * chain_params[0];
-    bKuhn_normalised = pow(nub3 / (Nbonds - Nboundary ), 1/3); ## Additional boundary bonds
+    bKuhn_normalised = pow(nub3 / (2 * (Nnodes - Nboundary ) ), 1/3); ## Additional boundary bonds
     
     # And assemble chain params array in dimensionless format
     chain_params_normalised = np.copy(chain_params);
@@ -103,7 +103,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     
     # Run minisation with breakable bonds to remove unrealistic chains
     if (model == "2" or polydispersity_flag):
-        utils.writeMain(mainfile,posfile,Boundary,dim,"4");
+        utils.writeMain(mainfile,posfile,Boundary,dim,"2");
         
     else:
         utils.writeMain(mainfile,posfile,Boundary,dim,model)

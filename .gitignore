@@ -1,3 +1,19 @@
 Example_2Dt.m
 Example_3Dt.m
 GeometricGrapht.m
+
+# Networks generated for test
+Network generation/Networks/
+
+# Simulation folder
+Simulation/*.dat
+Simulation/__pycache__/
+Simulation/*.in
+Simulation/*.res
+Simulation/log.*
+Simulation/log
+Simulation/Results
+Simulation/network_class.py
+Simulation/Current_geometries/
+*.swp
+*Zone.Identifier
