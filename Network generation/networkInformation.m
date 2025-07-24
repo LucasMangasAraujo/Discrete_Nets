@@ -30,5 +30,6 @@ function [nodes, bonds, boundary_bonds] = networkInformation(V, InternalEdges, B
     
     % Create matrix with all the bonds in the network
     bonds = [table2array(InternalEdges); boundary_bonds];
+    
     % -------------------------------------------------------------------------
 end

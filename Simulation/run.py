@@ -5,6 +5,9 @@ import sys, os
 # Import utils
 import utils
 
+# Import NetworkClass (new_feature)
+from network_class import NetworkClass
+
 '''
     Control code of the DN simulations. 
 '''
@@ -74,12 +77,14 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     Nnodes, Nbonds, Nboundary = len(Nodes), len(Bonds), len(Boundary);
     
     # Check if DN is polydispersed
+    BondTypes = {idx: chain_params[1] for idx in BondTypes.keys()}
     chain_lengths = np.array(list(BondTypes.values()))
     polydispersity_flag = not np.all(chain_lengths == chain_lengths[0])
     
     # Normalise the Kuhn length by the RVE's length
     nub3 = chain_density * chain_params[0];
-    bKuhn_normalised = pow(nub3 / (Nbonds - Nboundary ), 1/3); ## Additional boundary bonds
+    bKuhn_normalised = pow(nub3 / (2 * (Nnodes - Nboundary ) ), 1/3); ## Additional boundary bonds
+    
     
     # And assemble chain params array in dimensionless format
     chain_params_normalised = np.copy(chain_params);
@@ -125,8 +130,13 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             F = np.ones(3)
             print('Running initial relaxation...')
             err = runinc(loading,inc,0,dim);
+            breakpoint()
             if err:
-                print('Found error, exit')
+                print('Found error in initial relaxation!!')
+                print('Scanning network to detect too long chains...')
+                utils.remove_initially_tooLong(model)
+                
+                run_reduced_dt(main_file = 'main.in')
                 inc=inc-1
                 break
             else:
@@ -283,6 +293,31 @@ def runinc(loading,inc,dl,dim):
     err = checkerror('log.lammps')
 
     return err
+
+
+
+def run_reduced_dt(main_file):
+    """
+    Run FIRE with smaller dt
+    
+    Inputs:
+        main_file: original lammps input file
+        
+    Output:
+        err: boolean informing the success or failure of the 
+                     minimisation
+    """
+    
+    # Generate neem input file
+    utils.reduce_LAMMPS_timestep(main_file)
+    
+    # Call lammps
+    os.system('~/.local/bin/lmp -in small_dt.in > log')
+    
+    # Check if smaller dt led to convergence
+    err = checkerror('log.lammps')
+    breakpoint()
+    return err 
 
 
 def checkerror(filename):

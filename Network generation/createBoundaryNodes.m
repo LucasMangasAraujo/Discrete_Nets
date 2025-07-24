@@ -18,9 +18,9 @@
 function [new_nodes, new_bonds, boundary_nodes] = createBoundaryNodes(nodes, bonds, Ninternal, Nboundary, dim)
     % -------------------------------------------------------------------------
     % Each periodic link generates two boundary nodes
-    Nnodes_new = length(nodes) + 2 * length(Nboundary);
-    Nbonds_new = length(bonds) + 2 * length(Nboundary);
-    Nboundary_nodes = 2 * length(Nboundary);
+    Nnodes_new = length(nodes) + (2 * Nboundary);
+    Nbonds_new = Ninternal + (2 * Nboundary);
+    Nboundary_nodes = 2 * Nboundary;
     
     % Preallocate the output arrays
     new_nodes = zeros(Nnodes_new, 3);
@@ -30,8 +30,12 @@ function [new_nodes, new_bonds, boundary_nodes] = createBoundaryNodes(nodes, bon
     % Pre-allocate local arrays
     boundary_nodes_coordinates = zeros(Nboundary_nodes, 3);
     created_bonds = zeros(Nboundary_nodes, 2);
-    % -------------------------------------------------------------------------
     
+    % -------------------------------------------------------------------------
+
+    % -------------------------------------------------------------------------
+    % Keep the internal bonds
+   
     % -------------------------------------------------------------------------
     % Create the boundary nodes
     Nnodes = length(nodes); % As-generated number of nodes
@@ -49,7 +53,7 @@ function [new_nodes, new_bonds, boundary_nodes] = createBoundaryNodes(nodes, bon
     
     % Update the nodes and bonds matrices
     new_nodes = [nodes; boundary_nodes_coordinates];
-    new_bonds = [bonds; created_bonds];
+    new_bonds = [bonds(1:Ninternal, :); created_bonds];
     % -------------------------------------------------------------------------
 
 end

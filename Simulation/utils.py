@@ -6,6 +6,9 @@ from math import *
 import numpy as np
 import sys, os
 
+# Import NetworkClass (new_feature)
+from network_class import NetworkClass
+
 
 def writeMain(simfile,posfile,Boundary,dim,model):
     """ 
@@ -32,7 +35,7 @@ def writeMain(simfile,posfile,Boundary,dim,model):
     if model == '1':
         bond_style = 'harmonic'
         
-    elif model == '2':
+    elif model == '2' or model == '4':
         bond_style = 'langevin'
         
     elif model == '3':
@@ -571,6 +574,62 @@ def moveDatFile(original_file, dat_folder, inc, loading):
     os.system('mv %s %s' %(dat_file, dat_folder))
     
     return
+
+
+
+def remove_initially_tooLong(model):
+    """
+    Scan non-equilibrated DN to detect too long chains
+    """
+    
+    # Create DN object
+    DN = NetworkClass ("test.dat", "", "main.in")
+    
+    # Detect too elongated chains
+    tooLong_ids = DN.detect_tooLong_chains(model, cut_off = 0.95)
+    
+    # Remove from DNs the elongated chains
+    
+    DN.rewrite_data_file("test.dat", tooLong_ids, model)
+    
+    return 
+
+
+
+def reduce_LAMMPS_timestep(main_file):
+    """
+    Reduce the time step of LAMMPS integrator.
+    
+    Inputs:
+        main_file: name of the original LAMMPS input file.
+        
+    Outputs:
+        None
+    """
+    
+    # Name of temporary main_file
+    temp_file = "small_dt.in"
+    
+    # Read all lines from the original main_file
+    with open(main_file, "r") as f:
+        lines = f.readlines()
+        
+    # Write the temporari file
+    with open(temp_file, "w+") as f:
+        for line in lines:
+            if not "timestep" in line:
+                f.write(line)
+            elif "reset_timestep" in line:
+                f.write(line)
+            else:
+                data = line.strip("\n").split("\t")
+                deltaT = float(data[1]) / 10
+                f.write("timestep\t%g\n" %deltaT)
+        
+    return
+
+
+
 
 
 if __name__ == "__main__":
