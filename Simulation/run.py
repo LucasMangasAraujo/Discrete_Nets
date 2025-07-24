@@ -6,7 +6,7 @@ import sys, os
 import utils
 
 '''
-    Control code of the DN simulations.
+    Control code of the DN simulations. 
 '''
 
 def main(): 
