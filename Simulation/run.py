@@ -77,7 +77,6 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     Nnodes, Nbonds, Nboundary = len(Nodes), len(Bonds), len(Boundary);
     
     # Check if DN is polydispersed
-    BondTypes = {idx: chain_params[1] for idx in BondTypes.keys()}
     chain_lengths = np.array(list(BondTypes.values()))
     polydispersity_flag = not np.all(chain_lengths == chain_lengths[0])
     
@@ -106,13 +105,8 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     # Create loading history
     stretches = np.linspace(1, max_stretch, Ninc)
     
-    # Run minisation with breakable bonds to remove unrealistic chains
-    if (model == "2" or polydispersity_flag):
-        utils.writeMain(mainfile,posfile,Boundary,dim,"2");
-        
-    else:
-        utils.writeMain(mainfile,posfile,Boundary,dim,model)
-        
+    # Write LAMMPS input file
+    utils.writeMain(mainfile,posfile,Boundary,dim,model)
     
     # Initialise arrays
     Fall, Sall = [], [];
@@ -136,7 +130,6 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
                 print('Found error in initial relaxation!!')
                 found_tooLong = utils.remove_initially_tooLong(model)
                 
-                breakpoint()
                 if found_tooLong:
                     print('Running initial relaxation ...')
                     err = runinc(loading,inc,0,dim);
@@ -148,24 +141,26 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
                 print('Done!')
             
             
+            # If convergence was reached, create DN object
+            DN = NetworkClass ("test.dat", "test.res", "main.in")
+            
             # Obtain reordered Bonds dictionary
-            Bonds, typeIDs = getUpdatedBonds('test.dat');
+            _, Bonds = DN.get_nodes_and_bonds()
             Nbonds = len(Bonds);
             if Nbonds_start != Nbonds:
                 print('The first minisation step broke %g bonds.' %(Nbonds_start - Nbonds));
             else:
                 print('No broken bonds in the first step.')
             
+            
             # Calculate initial squared end-to-end distance and pre-stretch
-            r2, pre_stretch2 = getDist('test.dat', Bonds, BondTypes, typeIDs, bKuhn_normalised, polydispersity_flag);
-            print('r02: %g, r0: %g' %(r2, sqrt(r2)))
-            print('lambda02: %g, lambda0: %g' %(pre_stretch2, sqrt(pre_stretch2)))
-            print('affine modulus in b^3/kT units: %g' %(nub3 * pre_stretch2))
+            pre_stretch2 = np.square(DN.get_avg_preStretch(model))
+            rms_r0 = DN.get_rms_r0()
+            print(f'r02: {np.square(rms_r0)}, r0_rms: {rms_r0}')
+            print(f'lambda02: {pre_stretch2}, lambda0: {sqrt(pre_stretch2)}')
+            print(f'affine modulus in b^3/kT units: {nub3 * pre_stretch2}')
             
-            # Rewrite LAMMPS input file if needed
-            if (model == "2" or polydispersity_flag):
-                utils.writeMain(mainfile,posfile,Boundary,dim,model);
-            
+        
         else:
             inc_stretch = stretch - stretches[i - 1];
             F = defgrad(F,inc_stretch,loading,dim)
@@ -180,13 +175,15 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             
         
         # Calculate the stress
-        S = calculateStress('test.res',dim);
+        S = DN.calculate_stress(dim)
         S *= pow(bKuhn_normalised, 3); ## b^3/kT units
+        
         
         print('F: %g, %g, %g' %(F[0],F[1],F[2]))
         print('Sb^3/kT: %g, %g, %g' %tuple(S))
-        Fall.append(F[0]);
-        Sall.append(S);
+        Fall.append(F[0])
+        Sall.append(S)
+        
         
         # Move dat file if needed
         if visual_flag:
@@ -207,9 +204,9 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     tup = np.array(Fall), np.array(Sall);
     matrix = np.column_stack(tup, )
     
-    if loading == 1: tmp = '_uniaxial.txt';
-    elif loading == 2: tmp = '_biaxial.txt';
-    else: tmp = '_pshear.txt';
+    if loading == 1: tmp = '_uniaxial.csv';
+    elif loading == 2: tmp = '_biaxial.csv';
+    else: tmp = '_pshear.csv';
     
     
     if polydispersity_flag:
@@ -220,7 +217,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     
     print('stress and stretch data will be written to %s' %path_to_file.split('/')[-1]);
     header = 'lambda S1E S2E S3E'
-    np.savetxt(path_to_file, matrix, delimiter = " ", header = header);
+    np.savetxt(path_to_file, matrix, delimiter = ",", header = header);
     print('Done!')
     print(100 * '*')
     
@@ -299,6 +296,13 @@ def runinc(loading,inc,dl,dim):
 
     return err
 
+
+
+def rerun_first_relaxation():
+    
+    
+    
+    return err
 
 
 def run_reduced_dt(main_file):
