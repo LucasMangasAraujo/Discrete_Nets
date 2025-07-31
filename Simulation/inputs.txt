@@ -1,7 +1,7 @@
 $Dimension
 3
 $Geometry
-../Network generation/Networks/test.txt
+../Network generation/Networks/test_Log.txt
 $As-generated chain density
 0.001
 $Spring: 1-Gaussian, 2-Langevin, 3-XLangevin, 4-FracLangevin

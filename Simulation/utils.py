@@ -580,19 +580,47 @@ def moveDatFile(original_file, dat_folder, inc, loading):
 def remove_initially_tooLong(model):
     """
     Scan non-equilibrated DN to detect too long chains
+    
+    Inputs:
+        model (str): type of bond behaviour.
+                    model = '1': Gaussian
+                    model = '2': FJC
+                    model = '3': Breakable extensible FJC
+                    model = '4': Breakable FJC
+                    
+    Outputs:
+        found_tooLong (bool): Flag returning True if too elongated bonds 
+                                were found.
     """
+    
+    # Print initial message
+    print('Scanning network to detect too long chains...')
     
     # Create DN object
     DN = NetworkClass ("test.dat", "", "main.in")
     
     # Detect too elongated chains
     tooLong_ids = DN.detect_tooLong_chains(model, cut_off = 0.95)
+    if len(tooLong_ids) > 0:
+        print("Detected bonds that are too elongated at the start!!")
+        
+        ## Remove from DNs the elongated chains
+        print("Removing these bonds from the network...")
+        DN.rewrite_data_file("test.dat", tooLong_ids, model)
+        print("Done!")
+        
+        ## Set found_tooLong to True
+        found_tooLong = True
+        
+    else:
+        ## Print message and set found_tooLong = False
+        print("No bonds are too elongated at the start.")
+        found_tooLong = False
+        
     
-    # Remove from DNs the elongated chains
+    print("Scanning complete!")
     
-    DN.rewrite_data_file("test.dat", tooLong_ids, model)
-    
-    return 
+    return found_tooLong
 
 
 

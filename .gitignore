@@ -17,3 +17,4 @@ Simulation/network_class.py
 Simulation/Current_geometries
 *.swp
 *Zone.Identifier
+Simulation/inputs.txt.save

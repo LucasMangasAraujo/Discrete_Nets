@@ -108,7 +108,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     
     # Run minisation with breakable bonds to remove unrealistic chains
     if (model == "2" or polydispersity_flag):
-        utils.writeMain(mainfile,posfile,Boundary,dim,"4");
+        utils.writeMain(mainfile,posfile,Boundary,dim,"2");
         
     else:
         utils.writeMain(mainfile,posfile,Boundary,dim,model)
@@ -130,15 +130,20 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             F = np.ones(3)
             print('Running initial relaxation...')
             err = runinc(loading,inc,0,dim);
-            breakpoint()
+            
             if err:
+                ## Scan for bonds that are too elongated from the start
                 print('Found error in initial relaxation!!')
-                print('Scanning network to detect too long chains...')
-                utils.remove_initially_tooLong(model)
+                found_tooLong = utils.remove_initially_tooLong(model)
                 
-                run_reduced_dt(main_file = 'main.in')
-                inc=inc-1
-                break
+                breakpoint()
+                if found_tooLong:
+                    print('Running initial relaxation ...')
+                    err = runinc(loading,inc,0,dim);
+                else:
+                    print("Convergence issues stem from unknown reasons.")
+                    inc=inc-1
+                    break
             else:
                 print('Done!')
             
