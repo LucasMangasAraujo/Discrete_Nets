@@ -31,19 +31,11 @@ def writeMain(simfile,posfile,Boundary,dim,model):
     
     min_algo='fire' #algorithm for minimization
     dmax = 0.05      #how much a single atom can move during line search
-
-    if model == '1':
-        bond_style = 'harmonic'
-        
-    elif model == '2' or model == '4':
-        bond_style = 'langevin'
-        
-    elif model == '3':
-        bond_style = 'Xlangevin'
-        
-        
-    else:
-        print('unknown bond type: %s' %model)
+    
+    # Find bond style
+    bond_style, err = get_bond_style(model)
+    if err:
+        print(f'unknown bond type: {bond_style}')
         exit()
 
     f = open(simfile,'w')
@@ -96,7 +88,7 @@ def writeMain(simfile,posfile,Boundary,dim,model):
 
     # Step 2: Apply zero force on boundary nodes (prevent their motion) and minimize energy
     f.write('fix\t2 boundary setforce 0 0 0\n')
-    f.write('minimize\t0 1e-16 1000 10000\n\n')
+    f.write('minimize\t1e-16 1e-16 10000 10000\n\n')
 
     # Step 3: remove the zero-force constraint on the boundary
     f.write('unfix 2\n\n')
@@ -145,6 +137,7 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
             model = '1': Gaussian
             model = '2': FJC
             model = '3': Extensible FJC
+            model = '4': Breakable FJC
     params: list containing chain parameters other than 
             the chain length.
             
@@ -202,6 +195,9 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
                     bKuhn, Eb, critical_eng = tuple(params);
                     f.write('%d %g %g %g %g\n' %(idx, bKuhn, N, Eb, critical_eng));
                 
+                elif model == '4': ## FJC with scission
+                    NKuhn, critical_rNb = N ## N in this case is a tuple with the scission threshold and NKuhn
+                    f.write('%d %g %g %g\n' %(idx, bKuhn, NKuhn, critical_rNb));
             
         else:
             N = chain_lengths[0];
@@ -217,6 +213,9 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
                 bKuhn, Eb, critical_eng = tuple(params);
                 f.write('1 %g %g %g %g\n' %(bKuhn, N, Eb, critical_eng));
             
+            elif model == '4': ## FJC with chain scission
+                bKuhn, NKuhn, critical_rNb = params
+                f.write('1 %g %g %g\n' %(bKuhn, N, critical_rNb));
             
         f.write('\n\n');
         
@@ -657,6 +656,44 @@ def reduce_LAMMPS_timestep(main_file):
     return
 
 
+
+def get_bond_style(model):
+    """
+    Get string identifier within lammps of the chain model used
+    
+    Inputs:
+        model (str): string informing the chain model
+            model = '1': Gaussian
+            model = '2': FJC
+            model = '3': Breakable extensible FJC
+            model = '4': Breakable FJC
+        
+    Outputs:
+        bond_style (str): string identifier of the bond style in lammps.
+        err (bool): flag informing if model passed to the function is valid.
+    """
+    err = False;
+    if model in ['1', '5']:
+        bond_style = 'harmonic'
+        
+    elif model == '2':
+        bond_style = 'langevin'
+        
+    elif model == '3':
+        bond_style = 'Xlangevin'
+        
+    elif model == '4':
+        bond_style = 'Fraclangevin';
+        
+    elif model == '6':
+        bond_style = 'Fracharmonic';
+        
+    else:
+        print('unknown bond type: %s' %model)
+        err = True
+        exit()
+    
+    return bond_style, err
 
 
 

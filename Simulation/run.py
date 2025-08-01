@@ -298,13 +298,6 @@ def runinc(loading,inc,dl,dim):
 
 
 
-def rerun_first_relaxation():
-    
-    
-    
-    return err
-
-
 def run_reduced_dt(main_file):
     """
     Run FIRE with smaller dt
@@ -348,129 +341,6 @@ def checkerror(filename):
             return True
     return False
 
-
-def getUpdatedBonds(filename):
-    """
-    Get the bonds new ordering after the first energy 
-    minisation in LAMMPS.
-    
-    filename: string representing the dat file generated
-                by LAMMPS.
-                
-    The function returns:
-    1) Updated dictionary of bonds: Bonds.
-    2) Dictionary with the type of each bond: typeIDs.
-    """
-    
-    # Initialize the outputs
-    Bonds, typeIDs = {}, {}
-    
-    # Open file and read
-    with open(filename,"r") as f:
-        
-        # Read until the bonds were reached
-        key = f.readline().strip("\n");
-        
-        while "Bonds" not in key:
-            key = f.readline().strip("\n");
-            
-        f.readline().split()
-
-        data = f.readline().split()
-        while len(data) > 1:
-            idx = int(data[0])
-            bondType = int(data[1]);
-            n1 = int(data[2])
-            n2 = int(data[3])
-            typeIDs[idx] = bondType;
-            Bonds[idx] = [n1,n2] 
-            
-
-            data = f.readline().split()
-        
-    
-    return Bonds, typeIDs
-
-
-def getDist(filename, Bonds, BondTypes, typeIDs, bKuhn_normalised, polydispersity_flag):
-    
-    '''
-    calculate distances in a relaxed network from 'test.dat'.
-    
-    filename: output dat file from LAMMPS after relaxation.
-    Bonds: dictionary containing a list of the network bonds.
-    BondTypes: dictionary containing the chain lengths in the 
-                network.
-    typeIDs: list of integers of each bond type after LAMMPS
-            reordered the bonds.
-    bKuhn_normalised: normalised Kuhn length.
-    polydispersity_flag: boolean indicating if the DN is polydispersed.
-    
-    The function returns
-    1) A float representing the mean squared end-to-end distance (in a unit box):
-        r2.
-    2) A float representing the mean squared pre-stretch: pre_stretch_2.
-    '''
-
-    f = open(filename,'r')
-    
-    Nbond = len(Bonds)
-
-    #create a dictionary with current positions of nodes
-    Coords = {} #dictionary with current positions
-
-    key = f.readline().strip('\n')
-
-    while 'Atoms' not in key:
-        key = f.readline().strip('\n')
-    
-    f.readline()
-    
-    data = f.readline().split()
-    while len(data) > 1:
-        idx = int(data[0])
-        x = float(data[3])
-        y = float(data[4])
-        z = float(data[5])
-        Coords[idx] = [x,y,z] 
-    
-        data = f.readline().split()
-    
-    
-    # Check if network is polydispersed
-    if not polydispersity_flag:
-        N = BondTypes[1]; 
-    
-    #calculate relaxed distances 
-    i=0
-    r2 = 0.
-    pre_stretch2 = 0.;
-    
-
-    for idx,bond in Bonds.items():
-        # Calculate distance
-        n1 = bond[0]
-        n2 = bond[1]
-        dx = Coords[n1][0]-Coords[n2][0]
-        dy = Coords[n1][1]-Coords[n2][1]
-        dz = Coords[n1][2]-Coords[n2][2]
-        dist2 = dx**2 + dy**2 + dz**2
-        r2 += dist2
-        
-        # Calculate pre-stretch
-        if polydispersity_flag:
-            N = BondTypes[typeIDs[idx]];
-        
-        pre_stretch2 += dist2 / (N * pow(bKuhn_normalised, 2))
-
-        i += 1
-
-    #average squared distance
-    
-    r2 /= len(Bonds);
-    pre_stretch2 /= len(Bonds);
-    
-    return r2, pre_stretch2
 
 
 def defgrad(F,dl,loading,dim):
@@ -531,54 +401,6 @@ def defgrad(F,dl,loading,dim):
     return F
 
 
-def calculateStress(filename,dim):
-
-    """ Read test.res and calculate the stress from reaction forces on boundary nodes.
-    
-    filename: name of file containing the reaction forces in the boundary.
-    dim: integer indicating problem dimension.
-    
-    The function returns:
-    1) An array containing (true) stress components in L^3/kT units: S.
-    """
-
-    f = open(filename,'r')
-    S = np.zeros(3)
-
-    key = f.readline().strip('\n')
-
-    while 'id' not in key:
-        key = f.readline().strip('\n')
-    
-    data = f.readline().split()
-    while len(data) > 1:
-
-        if dim == 3:
-            x = float(data[2])
-            y = float(data[3])
-            z = float(data[4])
-            fx = -float(data[5])    #minus sign to take the reaction force
-            fy = -float(data[6])
-            fz = -float(data[7])
-            
-            
-            S[0] += fx*x
-            S[1] += fy*y
-            S[2] += fz*z
-
-        else:
-            x = float(data[2])
-            y = float(data[3])
-            fx = -float(data[4])    #minus sign to take the reaction force
-            fy = -float(data[5])
-
-            S[0] += fx*x
-            S[1] += fy*y
-
-                
-        data = f.readline().split()
-
-    return S 
 
 
 
