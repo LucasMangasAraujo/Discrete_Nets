@@ -18,12 +18,15 @@ def main():
     inputfile = 'inputs.txt';
     
     # Read simulation parameters
-    dim, geomfile, chain_density, model, chain_params, loading, max_stretch, Ninc, results_folder, visual_flag = utils.readParams(inputfile)
+    (dim, geomfile, chain_density, model, chain_params, loading, max_stretch, Ninc, 
+        results_folder, visual_flag, rate_independent_scission) = utils.readParams(inputfile)
+    
     
     # run simulation
     print(100 * "=")
     print('Starting simulation...')
-    runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stretch, Ninc, results_folder, visual_flag);
+    runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stretch, Ninc, 
+            results_folder, visual_flag, rate_independent_scission);
     print('Completed!')
     print(100 * '=')
     
@@ -32,7 +35,7 @@ def main():
 
 
 def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stretch, Ninc, results_folder, 
-            visual_flag = False):
+            visual_flag = False, rate_independent_scission = False):
     """
     Run the DN simulation and generate files with simulation results.
     
@@ -59,7 +62,8 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     visual_flag: Optional boolean flag indicating if the current 
                     configurations should be stored for visualisation
                     Default: False.
-    
+    rate_independent_scission: Optional boolean informing whether 
+                    rate-independent scissions are enabled
     The function returns None.
     """
     # Generate input files for LAMMPS
@@ -67,10 +71,10 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     mainfile = 'main.in'
     posfile = 'test.dat'
     
-    # Print inputs
+    # Print some inputs
     print('dim: %d' %dim)
     print('max stretch: %g' %max_stretch)
-    print('number of incs: %d' %Ninc);
+    print('number of incs: %d' %Ninc)
     
     # Read geometry file
     Nodes, Bonds, Boundary, BondTypes = utils.readGeometry(geomfile);
@@ -80,10 +84,20 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     chain_lengths = np.array(list(BondTypes.values()))
     polydispersity_flag = not np.all(chain_lengths == chain_lengths[0])
     
+    # Print number of chains
+    print('total number of nodes: %d' %Nnodes);
+    print('total number of bonds: %d' %Nbonds)
+    print('number of boundary nodes: %d' %Nboundary)
+    
+    # Check if rate-independent scissions are active and if chain model is appropriate
+    if rate_independent_scission:
+        print('Rate-independent scissions are enabled')
+        is_consistent = check_consistent_chain_model(model, rate_independent_scission)
+        if not is_consistent: return
+    
     # Normalise the Kuhn length by the RVE's length
     nub3 = chain_density * chain_params[0];
     bKuhn_normalised = pow(nub3 / (2 * (Nnodes - Nboundary ) ), 1/3); ## Additional boundary bonds
-    
     
     # And assemble chain params array in dimensionless format
     chain_params_normalised = np.copy(chain_params);
@@ -93,11 +107,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
         mean_N = np.mean(chain_lengths);
         print("mean chain length: %g" %mean_N)
     
-    
-    # Print number of chains
-    print('total number of nodes: %d' %Nnodes);
-    print('total number of bonds: %d' %Nbonds)
-    print('number of boundary nodes: %d' %Nboundary)
+    breakpoint()
     
     # Write initial position file for LAMMPS
     utils.writePositions(posfile, Nodes, Bonds, Boundary , BondTypes, model, chain_params_normalised)
@@ -160,6 +170,11 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             print(f'lambda02: {pre_stretch2}, lambda0: {sqrt(pre_stretch2)}')
             print(f'affine modulus in b^3/kT units: {nub3 * pre_stretch2}')
             
+            # Store the pristine number of chains in case scissions are enabled
+            if rate_independent_scission:
+                Nbonds_pristine = Nbonds
+                
+            
         
         else:
             inc_stretch = stretch - stretches[i - 1];
@@ -173,6 +188,12 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             else:
                 print('done!')
             
+        
+        # Break chains if rate-independent scissions were enabled
+        breakpoint()
+        # Update DN object if not initial relaxation step
+        if i != 0:
+            DN = NetworkClass ("test.dat", "test.res", "main.in")
         
         # Calculate the stress
         S = DN.calculate_stress(dim)
@@ -402,6 +423,41 @@ def defgrad(F,dl,loading,dim):
 
 
 
+def break_chains():
+    '''
+    Break chains in the network that have reached to the scission thredhold
+    '''
+    
+    
+    return
+
+def check_consistent_chain_model(model, rate_independent_scission):
+    '''
+    Cross check if the chain model makes sense when rate-independent
+    scissions are enabled.
+    
+    Inputs:
+        model (str): chain model used.
+            model = '1': Gaussian
+            model = '2': FJC
+            model = '3': Breakable extensible FJC
+            model = '4': Breakable FJC
+        
+        rate_independent_scission (bool): True if chain scissions are enabled.
+        
+    Output:
+        is_consistent (bool): True if chain model is appropriate.
+    '''
+    print('Checking if chain model selected is consistent with rate-independent scission...')
+    if int(model) > 2:
+        print('Chain model is consistent, proceed!')
+        is_consistent = True
+    else:
+        print('Chains model is not consistent!!. Please, check inputs.txt.')
+        print('Breaking simulation')
+        is_consistent = False
+    
+    return is_consistent
 
 
 if __name__ == "__main__":

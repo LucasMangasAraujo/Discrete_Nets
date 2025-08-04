@@ -423,6 +423,8 @@ def readParams(filename):
         of the simulation will be stored: results_folder.
     10) A boolean indicating if current configs should be 
         stored: visual_flag.
+    11) A boolean indicating whether rate-independent chain 
+        scissions are enabled.
     
     """
     
@@ -466,11 +468,22 @@ def readParams(filename):
         visual_flag = True;
     else:
         visual_flag = False;
+        
+    
+    f.readline()
+    data = f.readline().strip('\n');
+    if data == 'y':
+        rate_independent_scission = True
+    else:
+        rate_independent_scission = False
     
     f.close()
 
+    out = (dim, geomfile, chain_density , spring_type, params, loading, max_stretch, Ninc,
+            results_folder, visual_flag, rate_independent_scission
+            )
     
-    return dim, geomfile, chain_density , spring_type, params, loading, max_stretch, Ninc, results_folder, visual_flag
+    return out
 
 
 def createFolder(folder_name):
@@ -536,6 +549,15 @@ def printChainPar(model, chain_params, polydispersity_flag):
             print('polydispersed DN')
             print('b = %g, Eb = %g, critical_eng = %g' %tmp);
             
+        
+    elif model == '4': 
+        print('spring type: FJC with scission');
+        if not polydispersity_flag:
+            print(f'b = {chain_params[0]}, N = {chain_params[1]}')
+            print(f'scission threshold = {chain_params[2]} x Nb')
+        else:
+            print('polydispersed DN')
+            print('b = %g' %chain_params[0])
     
     return
 

@@ -1,13 +1,13 @@
 $Dimension
 3
 $Geometry
-../Network generation/Networks/test_Log.txt
+../Network generation/Networks/test.txt
 $As-generated chain density
 0.001
 $Spring: 1-Gaussian, 2-Langevin, 3-XLangevin, 4-FracLangevin
-2
+4
 $Spring parameters
-1 100
+1 100 0.95
 $Loading: 1-Uniaxial, 2-Biaxial, 3-Shear
 1
 $Final stretch and number of increments
@@ -15,4 +15,6 @@ $Final stretch and number of increments
 $Results folder
 Results/
 $Should configurations be stored[y/n]
+y
+$Rate-independent scission enabled (specify scissino threshold in spring parameters)?[y/n]
 y
