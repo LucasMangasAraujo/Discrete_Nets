@@ -6,7 +6,7 @@ import sys, os
 import utils
 
 # Import NetworkClass (new_feature)
-from network_class import NetworkClass
+from network_class import NetworkClass, FracNetworkClass
 
 '''
     Control code of the DN simulations. 
@@ -172,7 +172,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             # Store the pristine number of chains in case scissions are enabled
             if rate_independent_scission:
                 Nbonds_pristine = Nbonds
-                
+                Nbonds_previous_step = Nbonds
             
         
         else:
@@ -188,11 +188,15 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
                 print('done!')
             
         
-        # Break chains if rate-independent scissions were enabled
-        breakpoint()
         # Update DN object if not initial relaxation step
         if i != 0:
             DN = NetworkClass ("test.dat", "test.res", "main.in")
+        
+        # Break chains if rate-independent scissions were enabled
+        if rate_independent_scission:
+            DN = break_chains(model)
+            
+        
         
         # Calculate the stress
         S = DN.calculate_stress(dim)
@@ -422,13 +426,40 @@ def defgrad(F,dl,loading,dim):
 
 
 
-def break_chains():
+def break_chains(model):
     '''
     Break chains in the network that have reached to the scission thredhold
+    
+    Inputs:
+        Nbonds_previous_step (int): number of chains in the previous time step.
+        model (str): type of chain behaviour.
+                    model = '1': Gaussian
+                    model = '2': FJC
+                    model = '3': Breakable extensible FJC
+                    model = '4': Breakable FJC
+        
     '''
     
+    # Initialise current equilibrated DN
+    DN = FracNetworkClass("test.dat", "test.res","main.in")
     
-    return
+    # Scan network for broken chains
+    broken_ids = DN.detect_broken_chains(model)
+    
+    # Check if scissions were detecte:
+    if len(broken_ids) > 0:
+        # Remove broken chains
+        print("Scissions were detected, removing broken chains...")
+        print("Done!!")
+        breakpoint()
+        # Re-equilibrate the network
+        print("Running equilibration step to restore force balance...")
+        
+        
+    else:
+        print("No scission detected, proceed!")
+    
+    return DN
 
 def check_consistent_chain_model(model, rate_independent_scission):
     '''

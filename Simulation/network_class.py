@@ -734,7 +734,7 @@ class FracNetworkClass(NetworkClass):
     
     
     
-    def detect_broken_chains(self, model, extra_params):
+    def detect_broken_chains(self, model):
         """
         Detect ids of broken chains once after mechanical 
         equilibrium was reached.
@@ -753,7 +753,7 @@ class FracNetworkClass(NetworkClass):
             
             ## Asses if failure occured
             chain_coeffs = Coeffs[bond_type]
-            if FracNetworkClass.is_broken(dist, model, chain_coeffs, extra_params):
+            if FracNetworkClass.is_broken(dist, model, chain_coeffs):
                 broken_ids.add(idx)
         
         
@@ -761,6 +761,31 @@ class FracNetworkClass(NetworkClass):
         
     
     
+    @staticmethod
+    def is_broken(r, model, chain_coeffs):
+        """
+        Detect if chain is broken.
+        
+        Inputs:
+            r (float): current end-to-end distance
+            model (str):type of bond behaviour.
+                    model = '1': Gaussian
+                    model = '2': FJC
+                    model = '3': Breakable extensible FJC
+                    model = '4': Breakable FJC
+                    
+        Outputs:
+            flag (bool): flag returning True if the chain is broken
+        """
+        
+        if model == '4':
+            bKuhn, NKuhn = chain_coeffs[:2]
+            critical_rNb = chain_coeffs[2]
+            Nb = bKuhn * NKuhn
+            flag = (r / Nb) >= critical_rNb
+        
+        
+        return flag
     
     def remove_ineffective_clusters(self, G):
         """
