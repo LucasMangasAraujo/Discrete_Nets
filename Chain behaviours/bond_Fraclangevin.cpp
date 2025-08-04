@@ -83,10 +83,8 @@ void BondFRACLANGEVIN::compute(int eflag, int vflag)
         lambda = r / Lc;
 
 
-        //Pade approximation of the inverse Langevin function
-        beta = lambda * (3. - pow(lambda, 2)) / (1. - pow(lambda, 2));
         
-        // Check if broken
+        // Check if broken if
         
         if (lambda >= 1) {
             cout << "--------------Bond " << n << "---------------------" << "\n";
@@ -100,6 +98,8 @@ void BondFRACLANGEVIN::compute(int eflag, int vflag)
             lambda = 0.99999999;
         }
         
+        //Pade approximation of the inverse Langevin function
+        beta = lambda * (3. - pow(lambda, 2)) / (1. - pow(lambda, 2));
 
         if (r > 0.0) fbond = -beta / (r * b[type]);
         else fbond = 0.0;
