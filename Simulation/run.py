@@ -107,7 +107,6 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
         mean_N = np.mean(chain_lengths);
         print("mean chain length: %g" %mean_N)
     
-    breakpoint()
     
     # Write initial position file for LAMMPS
     utils.writePositions(posfile, Nodes, Bonds, Boundary , BondTypes, model, chain_params_normalised)

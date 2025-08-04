@@ -54,6 +54,7 @@ def writeMain(simfile,posfile,Boundary,dim,model):
     f.write('bond_style\t%s\n' %(bond_style))
     f.write('atom_modify\tsort 0 0\n')
     f.write('pair_style\tnone\n\n')
+    
 
     f.write('read_data\t%s\n\n' %posfile)
 
@@ -196,8 +197,8 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
                     f.write('%d %g %g %g %g\n' %(idx, bKuhn, N, Eb, critical_eng));
                 
                 elif model == '4': ## FJC with scission
-                    NKuhn, critical_rNb = N ## N in this case is a tuple with the scission threshold and NKuhn
-                    f.write('%d %g %g %g\n' %(idx, bKuhn, NKuhn, critical_rNb));
+                    critical_rNb = params[2] ## scission threshold
+                    f.write('%d %g %g %g\n' %(idx, bKuhn, N, critical_rNb));
             
         else:
             N = chain_lengths[0];
@@ -214,7 +215,7 @@ def writePositions(filename, Nodes, Bonds, Boundary, BondTypes, model, params):
                 f.write('1 %g %g %g %g\n' %(bKuhn, N, Eb, critical_eng));
             
             elif model == '4': ## FJC with chain scission
-                bKuhn, NKuhn, critical_rNb = params
+                bKuhn, _, critical_rNb = params
                 f.write('1 %g %g %g\n' %(bKuhn, N, critical_rNb));
             
         f.write('\n\n');
@@ -706,9 +707,6 @@ def get_bond_style(model):
         
     elif model == '4':
         bond_style = 'Fraclangevin';
-        
-    elif model == '6':
-        bond_style = 'Fracharmonic';
         
     else:
         print('unknown bond type: %s' %model)
