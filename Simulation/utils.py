@@ -5,10 +5,53 @@
 from math import *
 import numpy as np
 import sys, os
+from pathlib import Path
 
 # Import NetworkClass (new_feature)
 from network_class import NetworkClass
 
+
+
+def write_results(results, results_folder, polydispersity_flag, loading,
+                    rate_independent_scission, file_extension = '.csv'):
+    
+    # Create folder that will received the results
+    createFolder(results_folder)
+    folder_path = Path(results_folder)
+    
+    # Transform extract results from re
+    Fall, Sall = results[0], results[1]
+    if rate_independent_scission:
+        # Extract fraction of broken chains
+        fraction_broken_chains = results[2]
+        tup = np.array(Fall), np.array(Sall), np.array(fraction_broken_chains)
+    else:
+        tup = np.array(Fall), np.array(Sall);
+    
+    matrix = np.column_stack(tup, )
+    
+    # Set full path of the results file
+    if loading == 1: tmp = '_uniaxial' + file_extension
+    elif loading == 2: tmp = '_biaxial' + file_extension
+    else: tmp = '_pshear' + file_extension
+    
+    if polydispersity_flag:
+        path_to_file = results_folder /  Path('dataPoly' + tmp);
+    else:
+        path_to_file = results_folder / Path('data' + tmp);
+        
+    # Set header comments
+    if rate_independent_scission:
+        header = 'lambda, S1E, S2E, S3E, fb'
+    else:
+        header = 'lambda, S1E, S2E, S3E'
+        
+    
+    # Finally write file
+    print(f"Stress and stretch data will be written to {path_to_file}")
+    np.savetxt(path_to_file, matrix, delimiter = ",", header = header)
+    
+    return 
 
 def writeMain(simfile,posfile,Boundary,dim,model):
     """ 

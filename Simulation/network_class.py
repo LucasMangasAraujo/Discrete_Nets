@@ -889,3 +889,157 @@ class FracNetworkClass(NetworkClass):
         
         
         return
+        
+        
+    def any_path(self, failure_criterion, initial_Nodes):
+        """
+        Find if there is a path spanning the network.
+        
+        Inputs:
+            failure_criterion (int): failure criterion that depends on the loading type.
+                    1: path spanning the loading direction (assumed direction 1).
+                    2: path spanning the planes perpendicular to the tensile loading direction 
+                                    (direction 1 and 2)
+                    3: path spanning the direction of maximum principal stretch (assumed direction 1).
+                
+                
+        Outputs
+            path_exists (bool): True if at least one path was found.
+            
+        """
+        
+        # Get ids of boundary nodes
+        Boundary = set(self.get_boundary())
+        
+        # Creat simplified graph object
+        G = self.simplified_graph(Boundary)
+        
+        # Remove nodes that are in the boundary but not in the graph anymore
+        G_nodes = set(G.nodes())
+        filtered_Boundary = Boundary.intersection(G_nodes)
+        path_exists = False ## asume path does not exists
+        
+        # Analyse if failure ocurred
+        if failure_criterion in [1, 3]:
+            ## Find to which nodes are on the xx plane
+            xx_0 = [node for node in filtered_Boundary if np.isclose(initial_Nodes[node][0], 0)] ## plane x = 0
+            xx_1 = [node for node in filtered_Boundary if np.isclose(initial_Nodes[node][0], 1)] ## plane x = 1
+            
+            ## Get connected components of the current graph
+            components = list(nx.connected_components(G))
+            
+            for component in components:
+                
+                if any(n in component for n in xx_0) and any(n in component for n in xx_1):
+                    path_exists = True
+                    return path_exists
+                    
+        elif failure_criterion == 2:
+            ## Find to which nodes are on the xx plane
+            xx_0 = [node for node in filtered_Boundary if np.isclose(initial_Nodes[node][0], 0)] ## plane x = 0
+            xx_1 = [node for node in filtered_Boundary if np.isclose(initial_Nodes[node][0], 1)] ## plane x = 1
+            
+            ## Find to which nodes are on the yy plane
+            yy_0 = [node for node in filtered_Boundary if np.isclose(initial_Nodes[node][1], 0)] ## plane y = 0
+            yy_1 = [node for node in filtered_Boundary if np.isclose(initial_Nodes[node][1], 1)] ## plane y = 1
+            
+            
+            ## Get connected components of the current graph
+            components = list(nx.connected_components(G))
+            
+            ## Loop over the components
+            for component in components:
+                ## Check if path exists along direction 1 and direction 2
+                path_1_exists = any(n in component for n in xx_0) and any(n in component for n in xx_1)
+                path_2_exists = any(n in component for n in yy_0) and any(n in component for n in yy_1)
+                
+                ## Cross check
+                if path_1_exists and path_2_exists:
+                    path_exists = True
+                    return path_exists
+            
+            
+        
+        return path_exists
+        
+        
+    def simplified_graph(self, Boundary):
+        """
+        Simplify the DN graph, removing nodes that do not contribute
+        for the "propagation" of information.
+        
+        Inputs:
+            Boundary (set): ids of boundary nodes
+            
+        Outputs:
+            simplified_G (networx graph): simplified graph
+            
+        """
+        # Create graph object
+        simplified_G = self.create_DN_graph()
+        
+        # Find out which nodes have degree zero or one
+        flag = True
+        while flag:
+            ## Find out which nodes have degree one or zero
+            nodes_of_interest = set()
+            for node in simplified_G.nodes():
+                if simplified_G.degree(node) == 0 or simplified_G.degree(node) == 1:
+                    nodes_of_interest.add(node)
+                    
+            ## Remove boundary nodes from the nodes of interest
+            selected_nodes = nodes_of_interest.difference(Boundary)
+            if not len(selected_nodes) > 0:
+                break
+                
+            ## Remove now node and edges associated with the selected nodes (if not empty)
+            for node in selected_nodes:
+                simplified_G.remove_node(node)
+            
+        
+        # Remove clusters that are coiled
+        self.remove_ineffective_clusters(simplified_G)
+        
+        
+        return simplified_G
+    
+    
+    def remove_ineffective_clusters(self, G):
+        """
+        Remover clusters that are coiled from the Graph.
+        
+        Inputs:
+            G (networkx graph obj): self-explanatory
+            
+        Outputs: 
+            None
+        """
+        # Get current positions of the nodes
+        Nodes, _ = self.get_nodes_and_bonds()
+        
+        # Get connected components of the graph
+        connected_components = list(nx.connected_components(G))
+        
+        # Removed the connected components that are coiled
+        ineffective_clusters_ids = []
+        for i, component in enumerate(connected_components):
+            subG = G.subgraph(component)
+            sub_edges = list(subG.edges)
+            subG_distances = []
+            
+            for bond in sub_edges:
+                n1, n2 = bond
+                dist = np.linalg.norm(Nodes[n1] - Nodes[n2])
+                subG_distances.append(dist)
+            
+            ## check if all distances are close to zero
+            is_coiled = np.all(np.array(subG_distances) < 1e-6)
+            if is_coiled:
+                ineffective_clusters_ids.append(i)
+        
+        # With ids of the ineffective clusters, remove them from the graph
+        for i in ineffective_clusters_ids:
+            G.remove_nodes_from(connected_components[i])
+        
+        return
+    

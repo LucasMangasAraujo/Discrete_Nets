@@ -119,6 +119,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
     
     # Initialise arrays
     Fall, Sall = [], [];
+    if rate_independent_scission: fraction_broken_chains = []
     
     # Run the simulation
     for i, stretch in enumerate(stretches):
@@ -154,7 +155,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             DN = NetworkClass ("test.dat", "test.res", "main.in")
             
             # Obtain reordered Bonds dictionary
-            _, Bonds = DN.get_nodes_and_bonds()
+            initial_Nodes, Bonds = DN.get_nodes_and_bonds()
             Nbonds = len(Bonds);
             if Nbonds_start != Nbonds:
                 print('The first minisation step broke %g bonds.' %(Nbonds_start - Nbonds));
@@ -172,7 +173,6 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             # Store the pristine number of chains in case scissions are enabled
             if rate_independent_scission:
                 Nbonds_pristine = Nbonds
-                Nbonds_previous_step = Nbonds
             
         
         else:
@@ -191,21 +191,37 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
         # Update DN object if not initial relaxation step
         if i != 0 and not rate_independent_scission:
             DN = NetworkClass ("test.dat", "test.res", "main.in")
-        else:
+        elif rate_independent_scission:
             # Break chains if rate-independent scissions were enabled
             DN = break_chains(model, "test.dat", loading, dim)
+            
+            ## Check if failure ocurred
+            is_connected = DN.any_path(loading, initial_Nodes)
+            
         
         
-        # Calculate the stress
+        # Calculate the stress,
         S = DN.calculate_stress(dim)
         S *= pow(bKuhn_normalised, 3); ## b^3/kT units
         
+        # Calculate fractio of broken chains if scissions are enabled
+        if rate_independent_scission:
+            Nbonds = len(DN.get_nodes_and_bonds()[1])
+            fb = 1 - (Nbonds / Nbonds_pristine)
+            
         
-        print('F: %g, %g, %g' %(F[0],F[1],F[2]))
-        print('Sb^3/kT: %g, %g, %g' %tuple(S))
+        # Append resutls of current increment
         Fall.append(F[0])
         Sall.append(S)
+        if rate_independent_scission:
+            fraction_broken_chains.append(fb)
         
+        
+        # Print results of current increment
+        print('F: %g, %g, %g' %(F[0],F[1],F[2]))
+        print('Sb^3/kT: %g, %g, %g' %tuple(S))
+        if rate_independent_scission:
+            print(f"The fraction of broken chains is {100 * fb} per cent")
         
         # Move dat file if needed
         if visual_flag:
@@ -213,33 +229,29 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             utils.moveDatFile('test.dat', 'Current_geometries', inc, loading)
             print('Done!')
         
+        # Check network connectivity if scissions were enabled
+        if not is_connected:
+            print("Network connectivity was lost. Breaking simulation")
+            print(100* '-')
+            break
+        
         print('Moving to next increment...')
         print(100* '-')
         
         
     print('Simulation completed!')
     
+    # Set results tuple that will be written on the
+    if rate_independent_scission:
+        results = Fall, Sall, fraction_broken_chains
+    else:
+        results = Fall, Sall
+    
     # Write the txt file with the stress-stretch data
     print(100 * '*')
     print('Writing file with results...')
-    utils.createFolder(results_folder);
-    tup = np.array(Fall), np.array(Sall);
-    matrix = np.column_stack(tup, )
-    
-    if loading == 1: tmp = '_uniaxial.csv';
-    elif loading == 2: tmp = '_biaxial.csv';
-    else: tmp = '_pshear.csv';
-    
-    
-    if polydispersity_flag:
-        path_to_file = results_folder + 'dataPoly' + tmp;
-    else:
-        path_to_file = results_folder + 'data' + tmp;
-        
-    
-    print('stress and stretch data will be written to %s' %path_to_file.split('/')[-1]);
-    header = 'lambda S1E S2E S3E'
-    np.savetxt(path_to_file, matrix, delimiter = ",", header = header);
+    utils.write_results(results, results_folder, polydispersity_flag, loading, 
+                            rate_independent_scission)
     print('Done!')
     print(100 * '*')
     
@@ -456,6 +468,7 @@ def break_chains(model, data_file, loading, dim):
     scission_detected = len(broken_ids) > 0
     
     # Check if scissions were detecte:
+    print(100 * "=")
     if scission_detected:
         # Remove broken chains
         print("Scissions were detected, removing broken chains...")
@@ -470,7 +483,6 @@ def break_chains(model, data_file, loading, dim):
         # Repeat scan and re-equilibration loop until no more scissions are detected
         while scission_detected:
             # Scan network
-            print(100 * "=")
             print("Scanning network for newly broken chains...")
             broken_ids = DN.detect_broken_chains(model)
             scission_detected = len(broken_ids) > 0
@@ -485,15 +497,14 @@ def break_chains(model, data_file, loading, dim):
                 DN.remove_broken_chains(data_file, broken_ids, model)
                 err = runinc(loading,0,0,dim)
                 print("Done!")
-                print(100 * "=")
             else:
                 print("Further scissions were not trigeered, proceed!")
-                print(100 * "=")
                 break
             
     else:
         print("No scission detected, proceed!")
     
+    print(100 * "=")
     return DN
 
 
