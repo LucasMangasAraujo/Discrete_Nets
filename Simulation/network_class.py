@@ -444,7 +444,37 @@ class NetworkClass:
         
         return np.array(fbkT), chain_forces
 
-
+    def get_chain_stretches(self, initial_Nodes, F):
+        """
+        Get actual and affine chain stretches.
+        
+        Inputs:
+            initial_Nodes (dict): position of the nodes in the reference configuration.
+            F (ndarray): deformation gradient in principal form representation.
+            
+        Outputs:
+            chain_stretch_array (ndarray): array containing the actual chain stretches.
+            affine_chain_stretch_array(ndarray): array containing affine stretches.
+            
+            
+        """
+        Nodes, Bonds = self.get_nodes_and_bonds()
+        
+        ## Loop
+        chain_stretch_array = []
+        affine_chain_stretch_array = []
+        for idx, (n1, n2) in Bonds.items():
+            v = Nodes[n1] - Nodes[n2]
+            v0 = initial_Nodes[n1] - initial_Nodes[n2]
+            chain_stretch = np.linalg.norm(v) / np.linalg.norm(v0)
+            chain_stretch_array.append(chain_stretch)
+            
+            ## Compute affine stretch now
+            affine_chain_stretch = np.linalg.norm(F*v0) / np.linalg.norm(v0)
+            affine_chain_stretch_array.append(affine_chain_stretch)
+            
+        
+        return np.array(chain_stretch_array), np.array(affine_chain_stretch_array)
 
     def get_bonds_and_coeffs(self, model):
         """
@@ -707,33 +737,6 @@ class FracNetworkClass(NetworkClass):
     
     """
     
-    
-    def get_chain_stretches(self, initial_Nodes, F):
-        """
-        Get chain streches for the surviving chains
-        """
-        Nodes, Bonds = self.get_nodes_and_bonds()
-        
-        ## Loop
-        chain_stretch_array = []
-        affine_chain_stretch_array = []
-        for idx, (n1, n2) in Bonds.items():
-            v = Nodes[n1] - Nodes[n2]
-            v0 = initial_Nodes[n1] - initial_Nodes[n2]
-            chain_stretch = np.linalg.norm(v) / np.linalg.norm(v0)
-            chain_stretch_array.append(chain_stretch)
-            
-            ## Compute affine stretch now
-            affine_chain_stretch = np.linalg.norm(F*v0) / np.linalg.norm(v0)
-            affine_chain_stretch_array.append(affine_chain_stretch)
-            
-        
-        return np.array(chain_stretch_array), np.array(affine_chain_stretch_array)
-    
-    
-    
-    
-    
     def detect_broken_chains(self, model):
         """
         Detect ids of broken chains once after mechanical 
@@ -760,7 +763,6 @@ class FracNetworkClass(NetworkClass):
         return broken_ids
         
     
-    
     @staticmethod
     def is_broken(r, model, chain_coeffs):
         """
@@ -786,42 +788,104 @@ class FracNetworkClass(NetworkClass):
         
         
         return flag
-    
-    def remove_ineffective_clusters(self, G):
+        
+    def remove_broken_chains(self, data_file, broken_ids, model):
         """
-        Remover clusters that are coiled from the Graph.
+        Remove broken chains from LAMMPS data file.
         
         Inputs:
-            G (networkx graph obj): self-explanatory
-            
-        Outputs: 
+            data_file (str): full path to LAMMPS data file.
+            broken_ids (set): ids of the broken chains in the original data file.
+            model (str): type of bond behaviour.
+                    model = '1': Gaussian
+                    model = '2': FJC
+                    model = '3': Breakable extensible FJC
+                    model = '4': Breakable FJC
+                    
+        Outputs:
             None
         """
-        # Get current positions of the nodes
-        Nodes, _ = self.get_nodes_and_bonds()
         
-        # Get connected components of the graph
-        connected_components = list(nx.connected_components(G))
+        # Get equilrated node positions
+        Nodes, _  = self.get_nodes_and_bonds()
         
-        # Removed the connected components that are coiled
-        ineffective_clusters_ids = []
-        for i, component in enumerate(connected_components):
-            subG = G.subgraph(component)
-            sub_edges = list(subG.edges)
-            subG_distances = []
+        # Get Bonds and bond coefficients
+        Bonds, Coeffs = self.get_bonds_and_coeffs(model)
+        bond_ids = set(Bonds.keys())
+        nTypes = len(tuple(Coeffs.keys()))
+        
+        # Generate set with the ids of the intact chains
+        intact_ids = bond_ids - broken_ids
+        intact_Bonds = {}
+        if nTypes > 1: intact_Coeffs = {}
+        
+        temp = 0
+        for idx in intact_ids:
+            temp +=1
             
-            for bond in sub_edges:
-                n1, n2 = bond
-                dist = np.linalg.norm(Nodes[n1] - Nodes[n2])
-                subG_distances.append(dist)
-            
-            ## check if all distances are close to zero
-            is_coiled = np.all(np.array(subG_distances) < 1e-6)
-            if is_coiled:
-                ineffective_clusters_ids.append(i)
+            ## Check if there is any source of polydipersity
+            if nTypes > 1:
+                ## Store previous bond type
+                bond_type = Bonds[idx][0]
+                intact_Coeffs[temp] = Coeffs[bond_type]
+                intact_Bonds[temp] = temp, Bonds[idx][1], Bonds[idx][2]
+            else:
+                intact_Bonds[temp] = Bonds[idx]
         
-        # With ids of the ineffective clusters, remove them from the graph
-        for i in ineffective_clusters_ids:
-            G.remove_nodes_from(connected_components[i])
+        # Store lines from the original data file
+        with open(data_file, "r") as f:
+            lines = f.readlines()
+            
+        # Based on the new dict of bonds, rewrite data
+        with open(data_file, "w") as f:
+            ## Reuse some information 
+            for line in lines:
+                if 'atoms' in line:
+                    f.write('%d atoms\n' %len(Nodes))
+                elif 'bonds' in line:
+                    f.write('%d bonds\n' %len(intact_Bonds));
+                elif nTypes > 1 and ('bond types' in line):
+                    f.write(f'{len(intact_Coeffs)} bond types\n')
+                elif nTypes > 1 and ('Bond Coeffs' in line):
+                    ## Write header of the coefficients and skip one line
+                    f.write(line)
+                    f.write('\n')
+                    
+                    ## Write the coefficients of each bond
+                    for idx, coeffs in intact_Coeffs.items():
+                        f.write(f'{idx} {coeffs[0]} {coeffs[1]} {coeffs[2]}\n')
+                    f.write('\n')
+                    
+                    ## Write the header of the atoms section and break
+                    f.write("Atoms\n")
+                    break
+                    
+                else:
+                    f.write(line);
+                if 'Atoms' in line:
+                    break;
+                    
+            
+            ## Write the nodes
+            f.write('\n')
+            for idx in Nodes.keys():
+                f.write('%d 1 1 %g %g %g\n' %(idx,Nodes[idx][0],Nodes[idx][1],Nodes[idx][2]))
+            
+            ## Velocities
+            f.write('\n')
+            # Bonds IDs and pairs of nodes connected by each bond
+            f.write('Velocities\n\n') 
+            for idx in Nodes:
+                f.write('%d 0 0 0\n' %idx)
+            
+            ## Now the bonds
+            f.write('\n')
+            ## Bonds IDs and pairs of nodes connected by each bond
+            f.write('Bonds\n\n') 
+            for idx in intact_Bonds.keys():
+                f.write('%d %d %d %d\n' %(idx, intact_Bonds[idx][0], intact_Bonds[idx][1], intact_Bonds[idx][2]));
+        
+        
+        
         
         return

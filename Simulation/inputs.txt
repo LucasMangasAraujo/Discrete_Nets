@@ -7,7 +7,7 @@ $As-generated chain density
 $Spring: 1-Gaussian, 2-Langevin, 3-XLangevin, 4-FracLangevin
 4
 $Spring parameters
-1 100 0.5
+1 100 0.8
 $Loading: 1-Uniaxial, 2-Biaxial, 3-Shear
 1
 $Final stretch and number of increments

@@ -189,13 +189,11 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
             
         
         # Update DN object if not initial relaxation step
-        if i != 0:
+        if i != 0 and not rate_independent_scission:
             DN = NetworkClass ("test.dat", "test.res", "main.in")
-        
-        # Break chains if rate-independent scissions were enabled
-        if rate_independent_scission:
-            DN = break_chains(model)
-            
+        else:
+            # Break chains if rate-independent scissions were enabled
+            DN = break_chains(model, "test.dat", loading, dim)
         
         
         # Calculate the stress
@@ -426,7 +424,7 @@ def defgrad(F,dl,loading,dim):
 
 
 
-def break_chains(model):
+def break_chains(model, data_file, loading, dim):
     '''
     Break chains in the network that have reached to the scission thredhold
     
@@ -437,29 +435,67 @@ def break_chains(model):
                     model = '2': FJC
                     model = '3': Breakable extensible FJC
                     model = '4': Breakable FJC
+        data_file (str): full path to LAMMPS data file.
+        loading (int): type of loading.
+                    loading = 1: uniaxial tension
+                    loading = 2: biaxial tension
+                    loading = 3: pure shear
+                    
+        dim (int): 2 for 2D or 3 for 3D.
+        
+    Outputs:
+        DN (network object): Updated DN object.
         
     '''
     
     # Initialise current equilibrated DN
-    DN = FracNetworkClass("test.dat", "test.res","main.in")
+    DN = FracNetworkClass(data_file, "test.res","main.in")
     
     # Scan network for broken chains
     broken_ids = DN.detect_broken_chains(model)
+    scission_detected = len(broken_ids) > 0
     
     # Check if scissions were detecte:
-    if len(broken_ids) > 0:
+    if scission_detected:
         # Remove broken chains
         print("Scissions were detected, removing broken chains...")
+        DN.remove_broken_chains(data_file, broken_ids, model)
         print("Done!!")
-        breakpoint()
+        
         # Re-equilibrate the network
         print("Running equilibration step to restore force balance...")
+        err = runinc(loading,0,0,dim)
+        print("Equilibration completed!")
         
-        
+        # Repeat scan and re-equilibration loop until no more scissions are detected
+        while scission_detected:
+            # Scan network
+            print(100 * "=")
+            print("Scanning network for newly broken chains...")
+            broken_ids = DN.detect_broken_chains(model)
+            scission_detected = len(broken_ids) > 0
+            print("Done!")
+            
+            # Make decision
+            
+            if scission_detected:
+                # Reapeat chain removal and re-equilibration step
+                print("Broken chains were still detected!")
+                print("Removing these chains and equilibrating the network...")
+                DN.remove_broken_chains(data_file, broken_ids, model)
+                err = runinc(loading,0,0,dim)
+                print("Done!")
+                print(100 * "=")
+            else:
+                print("Further scissions were not trigeered, proceed!")
+                print(100 * "=")
+                break
+            
     else:
         print("No scission detected, proceed!")
     
     return DN
+
 
 def check_consistent_chain_model(model, rate_independent_scission):
     '''
