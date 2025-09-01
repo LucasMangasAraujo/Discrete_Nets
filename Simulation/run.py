@@ -231,7 +231,7 @@ def runsim(dim, geomfile, chain_density, model, chain_params, loading, max_stret
         
         # Check network connectivity if scissions were enabled
         if not is_connected:
-            print("Network connectivity was lost. Breaking simulation")
+            print("Network c    onnectivity was lost. Breaking simulation")
             print(100* '-')
             break
         
