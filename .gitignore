@@ -12,7 +12,9 @@ Simulation/*.in
 Simulation/*.res
 Simulation/log.*
 Simulation/log
+Simulation/Result
 Simulation/Results
+Simulation/*svg
 #Simulation/network_class.py
 Simulation/Current_geometries
 *.swp

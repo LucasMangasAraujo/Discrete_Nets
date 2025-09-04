@@ -27,7 +27,7 @@ plt.rcParams["font.family"] = "serif"
 def main():
     
     # Get the geometry file
-    _, geomfile, _, _, _, loading, _, _, results_folder,_ = readParams('inputs.txt')
+    _, geomfile, _, _, _, loading, _, _, results_folder,_ , _ = readParams('inputs.txt')
     
     
     # Decide whether the DN used is polydispersed
@@ -35,9 +35,17 @@ def main():
     chain_lengths = np.array(list(BondTypes.values()))
     polydispersity_flag = not np.all(chain_lengths == chain_lengths[0])
     
+    # Specify the file format
+    file_extension = ".csv"
+    if file_extension == ".csv":
+        separation = ","
+    elif file_extension == ".txt":
+        separation = " "
+    
     # Read the txt file with the results
-    path_to_file = resultsFile(results_folder, loading, polydispersity_flag);
-    data = np.loadtxt(path_to_file, skiprows=1)
+    path_to_file = resultsFile(results_folder, loading, polydispersity_flag, 
+                               file_extension);
+    data = np.loadtxt(path_to_file, skiprows=1, delimiter = separation)
     
     # Plot
     fig, ax = plt.subplots(1,1, figsize=(8, 8));
@@ -60,27 +68,29 @@ def main():
     return
 
 
-def resultsFile(results_folder, loading, polydispersity_flag):
+def resultsFile(results_folder, loading, polydispersity_flag, 
+                file_extension = ".csv"):
     """
     Return the name of the txt file with the data.
     
     results_folder: name of the folder where the text file is.
     loading: integer indicating the type of load.
     polydispersity_flag: Boolean informing if the DN is polydispersed
+    file_extension: self explanatory.
     
     The function returns:
     1) A string representing the path to the text file: path_to_file.
     """
     
     # Assemble 'sufix' 
-    if loading == 1: tmp = '_uniaxial.txt';
-    elif loading == 2: tmp = '_biaxial.txt';
-    else: tmp = '_pshear.txt';
+    if loading == 1: tmp = '_uniaxial';
+    elif loading == 2: tmp = '_biaxial';
+    else: tmp = '_pshear';
     
     if polydispersity_flag:
-        path_to_file = results_folder + 'data' + tmp;
+        path_to_file = results_folder + 'data' + tmp + file_extension;
     else:
-        path_to_file = results_folder + 'dataPoly' + tmp;
+        path_to_file = results_folder + 'dataPoly' + tmp + file_extension;
     
     
     return path_to_file
