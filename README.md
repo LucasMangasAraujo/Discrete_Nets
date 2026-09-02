@@ -294,4 +294,4 @@ Replace `test.txt` with `test_Log.txt` in `inputs.txt` and run `run.py`. Once co
 We are always open to collaborations and help. If you have any new ideas, suggestions, or applications, we would be happy to include them.
 
 ## Issues and Support
-For support or questions, please email **Lucas** at [lucas.mangasaraujo@eng.ox.ac.uk](lucas.mangasaraujo@eng.ox.ac.uk)
+For support or questions, please email **Lucas** at [lucas.mangasaraujo96@gmail.com](lucas.mangasaraujo96@gmail.com)
